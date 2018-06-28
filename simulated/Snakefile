@@ -33,7 +33,7 @@ rule gzip:
        "{file}"
     output:
        "{file}.gz"
-    shell: 
+    shell:
        "gzip -c {input} > {output}"
 
 rule mapping_file:
