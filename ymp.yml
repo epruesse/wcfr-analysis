@@ -1,0 +1,9 @@
+projects:
+   wcfr:
+     data: "simulated/map.csv"
+limits:
+   max_mem: '3G'
+references:
+   wcfr:
+     - url: wcfr.protein.sequence.fasta
+       type: fastp
