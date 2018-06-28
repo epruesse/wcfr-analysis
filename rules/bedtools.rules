@@ -1,0 +1,35 @@
+Env(name="bedtools", base="bioconda", packages="bedtools")
+
+with Stage("bedtools") as S:
+  S.doc("""
+  """)
+
+  rule bedtools_getfasta:
+    """Uses bedtools getfasta to filter an assembled fasta file according to hits in a gtf file."""
+    message:
+        "FIXME"
+    input:
+        fasta = "{:prev:}/{:target:}.fasta.gz",
+        gtf = "{:prev:}/{:target:}.gtf"
+    output:
+        "{:this:}/{target}.fasta.gz"
+    conda:
+        "bedtools"
+    shadow:
+        "shallow"
+    shell: """
+    gunzip -c {input.fasta} > tmpfile
+    bedtools getfasta \
+    -fi tmpfile \
+    -bed {input.gtf} \
+    -fo outfile
+    gzip -c outfile > {output}
+    """
+
+  rule bedtools_getfasta_all:
+    message:
+     "Bedtools: getfasta done"
+    input:
+     "{:this:}/{:targets:}.fasta.gz"
+    output:
+     touch("{:this:}/all")

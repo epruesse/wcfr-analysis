@@ -1,0 +1,29 @@
+with Stage("gtf_filter") as S:
+    S.doc("""
+    Filter GTF or GFF file to remove low scoring sequences.
+    """)
+
+    rule gtf_filter:
+        "Filter GTF/GFF file by score"
+        message:
+            "Remove sequences scoring less than "
+        input:
+            "{:prev:}/{sample}.gtf"
+        output:
+            "{:this:}/{sample}.gtf"
+        params:
+            cutoff = 10**-90
+        run:
+            from ymp import gff
+            with open(input[0], "r") as inf, open(output[0], "a") as outf:
+                data = inf.readlines()
+                for line in data:
+                    if line.startswith("#"):
+                        continue
+                    score = float(line.split()[5])
+                    if score <= params.cutoff:
+                        outf.write(line)
+
+    rule gtf_filter_all:
+        output: touch("{:this:}/all")
+        input: "{:this:}/{:targets:}.gtf"
