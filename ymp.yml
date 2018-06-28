@@ -1,9 +1,17 @@
 projects:
    wcfr:
      data: "simulated/map.csv"
-limits:
-   max_mem: '3G'
+   ibd:
+     data:
+       join:
+         - 'SraRunTable_SRP057027.txt'
+         - 'mapping.csv'
+     name_col: 'Library_Name_s'
+
 references:
    wcfr:
      - url: wcfr.protein.sequence.fasta
+       type: fastp
+   psa:
+     - url: 'psa.faa'
        type: fastp
