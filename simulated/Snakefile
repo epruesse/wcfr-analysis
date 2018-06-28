@@ -1,0 +1,80 @@
+abundances = {
+    's1': [1,1,1,1,1],
+    's2': [9,0,9,0,9],
+    's3': [6,8,3,1,9]
+}
+
+genomes = [
+    'B_eggerthiiDSM20697.g1',
+    'B_uniformisCL03T00C23.g2',
+    'B_fragilisNCTC9343.g3',
+    'B_Sp325.g4',
+    'B_fragilisHMW615.g5'
+]
+
+SAMPLE_FACTOR = 1000
+
+def get_nreads(wc):
+    genome_idx = genomes.index(wc.genome)
+    return abundances[wc.sample][genome_idx] * SAMPLE_FACTOR
+
+wildcard_constraints:
+    sample = "(" + "|".join(abundances.keys()) +  ")",
+    genome = "(" + "|".join(genomes) +")"
+
+
+rule all:
+    input:
+        expand("{sample}.{rf}.fq", sample=abundances.keys(), rf='R1 R2'.split())
+
+rule simulate_reads:
+    input:
+        "{genome}.fasta"
+    output:
+        fq1 = "{genome}.R1.fq",
+        fq2 = "{genome}.R2.fq"
+    params:
+        insert_size = 10*15,
+        coverage=1000,
+        sdev=150
+    shadow: "shallow"
+    shell: """
+    art_illumina \
+    --in {input} \
+    --out out \
+    --mflen {params.insert_size} \
+    --paired \
+    --len 100 \
+    --fcov {params.coverage} \
+    --seqSys HS20 \
+    --noALN \
+    --sdev {params.sdev}
+
+    mv out1.fq {output.fq1}
+    mv out2.fq {output.fq2}
+    """
+
+rule sample_reads:
+    output:
+        fq1='{sample}.{genome}.R1.fq',
+        fq2='{sample}.{genome}.R2.fq'
+    input:
+        fq1 = "{genome}.R1.fq",
+        fq2 = "{genome}.R2.fq"
+    params:
+        nreads = get_nreads
+    shell: """
+    reformat.sh in={input.fq1} in2={input.fq2} out={output.fq1} \
+                out2={output.fq2} sample={params.nreads}
+    """
+
+rule merge_read_files:
+    output:
+        "{sample}.{r}.fq"
+    input:
+        expand('{{sample}}.{genome}.{{r}}.fq', genome=genomes)
+    wildcard_constraints:
+        r="R[12]"
+    shell: """
+    cat {input} > {output}
+    """
