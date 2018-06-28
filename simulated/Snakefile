@@ -58,6 +58,7 @@ rule simulate_reads:
         coverage=1000,
         sdev=150
     shadow: "shallow"
+    conda: "art.yaml"
     shell: """
     art_illumina \
     --in {input} \
