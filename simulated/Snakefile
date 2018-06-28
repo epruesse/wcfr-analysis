@@ -22,10 +22,22 @@ wildcard_constraints:
     sample = "(" + "|".join(abundances.keys()) +  ")",
     genome = "(" + "|".join(genomes) +")"
 
+readfiles = expand("{sample}.{rf}.fq", sample=abundances.keys(), rf='R1 R2'.split())
 
 rule all:
     input:
-        expand("{sample}.{rf}.fq", sample=abundances.keys(), rf='R1 R2'.split())
+        readfiles, "map.csv"
+
+rule mapping_file:
+    output:
+       'map.csv'
+    run:
+       with open(output[0], "w") as out:
+          import csv
+          writer = csv.writer(out)
+          writer.writerow(['name', 'fq1', 'fq2'])
+          for sample in abundances:
+              writer.writerow([sample, sample+".R1.fq", sample+".R2.fq"])
 
 rule simulate_reads:
     input:
