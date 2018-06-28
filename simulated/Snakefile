@@ -22,11 +22,19 @@ wildcard_constraints:
     sample = "(" + "|".join(abundances.keys()) +  ")",
     genome = "(" + "|".join(genomes) +")"
 
-readfiles = expand("{sample}.{rf}.fq", sample=abundances.keys(), rf='R1 R2'.split())
+readfiles = expand("{sample}.{rf}.fq.gz", sample=abundances.keys(), rf='R1 R2'.split())
 
 rule all:
     input:
         readfiles, "map.csv"
+
+rule gzip:
+    input:
+       "{file}"
+    output:
+       "{file}.gz"
+    shell: 
+       "gzip -c {input} > {output}"
 
 rule mapping_file:
     output:
@@ -37,7 +45,7 @@ rule mapping_file:
           writer = csv.writer(out)
           writer.writerow(['name', 'fq1', 'fq2'])
           for sample in abundances:
-              writer.writerow([sample, sample+".R1.fq", sample+".R2.fq"])
+              writer.writerow([sample, sample+".R1.fq.gz", sample+".R2.fq.gz"])
 
 rule simulate_reads:
     input:
