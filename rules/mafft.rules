@@ -19,11 +19,11 @@ with Stage("mafft") as S:
     shadow:
         "shallow"
     shell: """
-    cat {input} | \
+    zcat {input} > tmpfile
     mafft \
     --thread {threads} \
     --nuc \
-    - \ | gzip -c outfile > {output}
+    tmpfile \ | gzip -c outfile > {output}
     """
 
   rule mafft_all:
