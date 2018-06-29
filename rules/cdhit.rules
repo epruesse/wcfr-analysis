@@ -1,0 +1,33 @@
+Env(name="cd-hit", base="bioconda", packages="cd-hit")
+
+with Stage("cdhit") as S:
+  S.doc("""
+  """)
+
+  rule cluster:
+    """Uses cd-hit-est to cluster sequences from a filtered set of contigs."""
+    message:
+        "FIXME"
+    input:
+        "{:prev:}/{:target:}.fasta.gz"
+    output:
+        "{:this:}/{target}.fasta.gz"
+    conda:
+        "cd-hit"
+    shadow:
+        "shallow"
+    shell: """
+    gunzip -c {input} > tmpfile
+    cd-hit-est \
+    -i tmpfile \
+    -o outfile
+    gzip -c outfile > {output}
+    """
+
+  rule cdhit_all:
+    message:
+     "cd-hit-est done"
+    input:
+     "{:this:}/{:targets:}.fasta.gz"
+    output:
+     touch("{:this:}/all")

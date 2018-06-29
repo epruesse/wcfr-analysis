@@ -1,0 +1,35 @@
+Env(name="mafft", base="bioconda", packages="mafft")
+
+with Stage("mafft") as S:
+  S.doc("""
+  """)
+
+  rule align:
+    """Uses mafft to align all sequences from sets of clustered contigs."""
+    message:
+        "FIXME"
+    input:
+        "{:prev:}/{:target:}.fasta.gz"
+    output:
+        "{:this:}/{target}.fasta.gz"
+    threads:
+        8
+    conda:
+        "mafft"
+    shadow:
+        "shallow"
+    shell: """
+    cat {input} | \
+    mafft \
+    --thread {threads} \
+    --nuc \
+    - \ | gzip -c outfile > {output}
+    """
+
+  rule mafft_all:
+    message:
+     "mafft done"
+    input:
+     "{:this:}/{:targets:}.fasta.gz"
+    output:
+     touch("{:this:}/all")
