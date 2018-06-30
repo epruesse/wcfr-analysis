@@ -18,8 +18,8 @@ with Stage("mafft") as S:
         "mafft"
     shadow:
         "shallow"
-    shell: """
-    zcat {input} > tmpfile
+    shell:"""
+    gunzip -c {input} > tmpfile
     mafft \
     --thread {threads} \
     --nuc \
