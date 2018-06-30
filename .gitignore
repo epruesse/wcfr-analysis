@@ -1,0 +1,7 @@
+/simulated/*
+!/simulated/Snakefile
+!/simulated/*.fasta
+/references
+.ymp
+.snakemake
+/wcfr*

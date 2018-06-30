@@ -1,35 +1,85 @@
 Env(name="mafft", base="bioconda", packages="mafft")
 
-with Stage("mafft") as S:
+with Stage("nucalign_mafft") as S:
   S.doc("""
   """)
 
-  rule align:
+  rule mafft_nuc:
     """Uses mafft to align all sequences from sets of clustered contigs."""
     message:
         "FIXME"
     input:
         "{:prev:}/{:target:}.fasta.gz"
     output:
-        "{:this:}/{target}.fasta.gz"
+        "{:this:}/{target}.aligned.fasta.gz"
+    log:
+        "{:this:}/{target}.log"
     threads:
         8
     conda:
         "mafft"
-    shadow:
-        "shallow"
     shell:"""
-    gunzip -c {input} > tmpfile
+    gunzip -c {input} | \
     mafft \
     --thread {threads} \
     --nuc \
-    tmpfile \ | gzip -c outfile > {output}
+    - 2>{log} | \
+    gzip -c > {output}
     """
 
-  rule mafft_all:
+  rule mafft_nuc_all:
     message:
-     "mafft done"
+        "mafft done"
     input:
-     "{:this:}/{:targets:}.fasta.gz"
+        "{:this:}/{:targets:}.aligned.fasta.gz"
     output:
-     touch("{:this:}/all")
+        touch("{:this:}/all")
+
+with Stage("protalign_mafft") as S:
+  S.doc("""
+  """)
+  rule mafft_nuc2prot:
+      message:
+          "Converting nuc->amino"
+      input:
+          "{:prev:}/{:target:}.fasta.gz"
+      output:
+          "{:this:}/{target}.fastp.gz"
+      run:
+          from ymp.nuc2aa import fasta_dna2aa
+          import gzip
+          with gzip.open(output[0], "wt") as outf:
+            for fn in input:
+              with gzip.open(input[0], "rt") as inf:
+                fasta_dna2aa(inf, outf)
+
+  rule mafft_prot:
+      """Uses mafft to align all sequences from sets of clustered contigs."""
+      message:
+          "FIXME"
+      input:
+          "{:this:}/{target}.fastp.gz"
+      output:
+          "{:this:}/{target}.aligned.fastp.gz"
+      log:
+          "{:this:}/{target}.log"
+      threads:
+          8
+      conda:
+          "mafft"
+      shell:"""
+      gunzip -c {input} | \
+      mafft \
+      --thread {threads} \
+      --amino \
+      - 2>{log} | \
+      gzip -c > {output}
+      """
+
+  rule mafft_prot_all:
+    message:
+        "mafft done"
+    input:
+        "{:this:}/{:targets:}.aligned.fastp.gz"
+    output:
+        touch("{:this:}/all")
