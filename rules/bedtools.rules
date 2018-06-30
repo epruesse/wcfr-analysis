@@ -1,6 +1,6 @@
 Env(name="bedtools", base="bioconda", packages="bedtools")
 
-with Stage("bedtools") as S:
+with Stage("gtf2fasta") as S:
   S.doc("""
   """)
 
