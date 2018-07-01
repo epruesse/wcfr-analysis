@@ -1,0 +1,31 @@
+Env(name="bedtools", base="bioconda", packages="bedtools")
+
+with Stage("get_counts") as S:
+  S.doc("""
+  """)
+
+  rule bedtools_multicov:
+    """Uses bedtools multicov to count the number of reads from a bam file that correspond to hits in a gtf file."""
+    message:
+        "FIXME"
+    input:
+        bam = "{:prev:}/{:target:}.sorted.bam",
+        gtf = "{:prev:}/{:target:}.gtf"
+    output:
+        "{:this:}/{target}.counts.gtf"
+    conda:
+        "bedtools"
+    shell: """
+    bedtools multicov \
+    -bams {input.bam} \
+    -bed {input.gtf} \
+    > {output}
+    """
+
+  rule get_counts_all:
+    message:
+     "Bedtools: multicov done"
+    input:
+     "{:this:}/{:targets:}.counts.gtf"
+    output:
+     touch("{:this:}/all")
