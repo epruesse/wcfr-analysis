@@ -1,0 +1,27 @@
+Env(name="iqtree", base="bioconda", packages="iqtree")
+
+with Stage("tree") as S:
+  S.doc("""
+  """)
+
+  rule :
+    """Uses iqtree to generate phylogenteic tree from a multiple sequence alignment."""
+    message:
+        "FIXME"
+    input:
+        "{:prev:}/{sample}.fastp.gz"
+    output:
+        "{:this:}/{sample}"
+    threads:
+        8
+    conda:
+        "iqtree"
+    shadow:
+        "shallow"
+    shell: """
+    gunzip -c {input} > tmpfile |
+    iqtree \
+    -nt {threads} \
+    -s tmpfile 
+    gzip {output}
+    """
