@@ -1,0 +1,29 @@
+Env(name="samtools", base="bioconda", packages="samtools")
+
+with Stage("bam_count") as S:
+  S.doc("""
+  """)
+
+  rule samtools:
+    """Uses samtools idxsats to count the number of reads from a bam file."""
+    message:
+        "FIXME"
+    input:
+        "{:prev:}/{:target:}.sorted.bam",
+    output:
+        "{:this:}/{target}.counts.tsv"
+    conda:
+        "samtools"
+    shell: """
+    samtools idxstats \
+    {input} \
+    > {output}
+    """
+
+  rule bam_count_all:
+    message:
+     "Samtools idxstats done"
+    input:
+     "{:this:}/{:targets:}.counts.tsv"
+    output:
+     touch("{:this:}/all")
