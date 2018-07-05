@@ -17,6 +17,10 @@ with Stage("bam_count") as S:
     shell: """
     samtools idxstats \
     {input} \
+    | awk '
+       BEGIN {{print "name\tlength\tcount"}}
+       {{print $1 "\t" $2 "\t" $3+$4}}
+       ' \
     > {output}
     """
 
