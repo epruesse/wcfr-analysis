@@ -8,9 +8,9 @@ with Stage("gtf_filter") as S:
         message:
             "Remove sequences scoring less than "
         input:
-            "{:prev:}/{sample}.gtf"
+            "{:prev:}/{:target:}.gtf"
         output:
-            "{:this:}/{sample}.gtf"
+            "{:this:}/{target}.gtf"
         params:
             cutoff = 10**-90
         run:
