@@ -11,19 +11,26 @@ with Stage("iqtree") as S:
     input:
         "{:prev:}/{:target:}.aligned.fastp.gz"
     output:
-        "{:this:}/{target}.tree.gz"
+        tree = "{:this:}/{target}.tree.gz",
+        report = "{:this:}/{target}.iqtree",
+        dist = "{:this:}/{target}.mldist"
+    log:
+        "{:this:}/{target}.log"
+    params:
+        pre = "{:this:}/{target}"
     threads:
-        8
+        32
     conda:
         "iqtree"
     shadow:
         "shallow"
     shell: """
-    gunzip -c {input} > tmpfile 
+    gunzip -c {input} > tmpfile
     iqtree \
     -nt {threads} \
-    -s tmpfile
-    gzip {output}
+    -s tmpfile \
+    -pre {params.pre}
+    gzip -c {params.pre}.treefile > {output.tree}
     """
 
   rule iqtree_all:
