@@ -15,7 +15,8 @@ with Stage("iqtree") as S:
         report = "{:this:}/{target}.iqtree",
         dist = "{:this:}/{target}.mldist"
     log:
-        "{:this:}/{target}.log"
+        log = "{:this:}/{target}.log",
+        std = "{:this:}/{target}.out",
     params:
         pre = "{:this:}/{target}"
     threads:
@@ -29,7 +30,7 @@ with Stage("iqtree") as S:
     iqtree \
     -nt {threads} \
     -s tmpfile \
-    -pre {params.pre}
+    -pre {params.pre} >{log.std} 2>&1
     gzip -c {params.pre}.treefile > {output.tree}
     """
 
