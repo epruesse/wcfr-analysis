@@ -4,30 +4,57 @@ with Stage("cdhit") as S:
   S.doc("""
   """)
 
+  rule cdhit_prep_input:
+   message:
+       "CDHit: preparing input data"
+   input:
+       "{:prev:}/{:target:}.fastp.gz"
+   output:
+       temp("{:this:}/all_{target}.fastp")
+   run:
+       import gzip
+       with open(output[0], "w") as outfasta:
+          for infile in input:
+              id = os.path.basename(infile)[:-len(".fastp.gz")]
+              with gzip.open(infile, "rt") as infasta:
+                  for line in infasta:
+                      if line.startswith(">"):
+                          outfasta.write("".join((">",id,":",line[1:])))
+                      else:
+                          outfasta.write(line.replace("*","X"))
+
   rule cluster:
     """Uses cd-hit-est to cluster sequences from a filtered set of contigs."""
     message:
-        "FIXME"
+        "CDHit: clustering {wildcards.target}"
     input:
-        "{:prev:}/{:target:}.fasta.gz"
+        "{:this:}/all_{target}.fastp"
     output:
-        "{:this:}/{target}.fasta.gz"
+        "{:this:}/{target}.fastp.gz",
+        "{:this:}/{target}.clstr"
     conda:
         "cd-hit"
     shadow:
         "shallow"
+    threads:
+        32
+    params:
+        mem=icfg.mem("128G")
     shell: """
-    gunzip -c {input} > tmpfile
-    cd-hit-est \
-    -i tmpfile \
-    -o outfile
-    gzip -c outfile > {output}
+    cd-hit \
+    -T {threads} \
+    -M {params.mem} \
+    -i {input} \
+    -o outfile \
+    -g 1 -p 1 -d 0
+    gzip -c outfile > {output[0]}
+    cp outfile.clstr {output[1]}
     """
 
   rule cdhit_all:
     message:
      "cd-hit-est done"
     input:
-     "{:this:}/{:targets:}.fasta.gz"
+     "{:this:}/{:targets:}.fastp.gz"
     output:
      touch("{:this:}/all")
