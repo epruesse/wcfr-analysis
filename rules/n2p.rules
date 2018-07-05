@@ -1,0 +1,17 @@
+with Stage("n2p") as S:
+  S.doc("""
+  """)
+  rule nuc2prot:
+      message:
+          "Converting nuc->amino"
+      input:
+          "{:prev:}/{:target:}.fasta.gz"
+      output:
+          "{:this:}/{target}.fastp.gz"
+      run:
+          from ymp.nuc2aa import fasta_dna2aa
+          import gzip
+          with gzip.open(output[0], "wt") as outf:
+            for fn in input:
+              with gzip.open(input[0], "rt") as inf:
+                fasta_dna2aa(inf, outf)
