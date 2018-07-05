@@ -1,6 +1,7 @@
 /simulated/*
 !/simulated/Snakefile
 !/simulated/*.fasta
+!/simulated/*abundances.csv
 /references
 .ymp
 .snakemake
