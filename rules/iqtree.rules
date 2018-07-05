@@ -19,7 +19,7 @@ with Stage("iqtree") as S:
     shadow:
         "shallow"
     shell: """
-    gunzip -c {input} > tmpfile |
+    gunzip -c {input} > tmpfile 
     iqtree \
     -nt {threads} \
     -s tmpfile
@@ -30,6 +30,6 @@ with Stage("iqtree") as S:
     message:
      "iqtree done"
     input:
-     "{:this:}/{:targets:}.tree.gz
+     "{:this:}/{:targets:}.tree.gz"
     output:
      touch("{:this:}/all")
