@@ -12,7 +12,7 @@ with Stage("gtf2fasta") as S:
         fasta = "{:prev:}/{:target:}.fasta.gz",
         gtf = "{:prev:}/{:target:}.gtf"
     output:
-        "{:this:}/{target}.fasta"
+        "{:this:}/{target}.fasta.gz"
     conda:
         "bedtools"
     shadow:
@@ -22,7 +22,8 @@ with Stage("gtf2fasta") as S:
     bedtools getfasta \
     -fi tmpfile \
     -bed {input.gtf} \
-    -fo {output}
+    -fo outfile
+    gzip -c outfile > {output}
     """
 
   rule bedtools_getfasta_all:
@@ -32,22 +33,3 @@ with Stage("gtf2fasta") as S:
      "{:this:}/{:targets:}.fasta.gz"
     output:
      touch("{:this:}/all")
-
-  rule affix_sample_id:
-    message:
-        "Adding the sample id to each contig"
-    input:
-        "{:this:}/{target}.fasta"
-    output:
-        "{:this:}/{target}.id.fasta.gz"
-    run:
-        sample = input[0]
-        sampleID = sample.split(".")[0]
-        with open(input[0], "r") as inf, open(output[0], "a") as outf:
-            data = inf.readlines()
-            for line in data:
-                if line.startswith(">"):
-                    line = line + "_" + sampleID
-                    outf.write(line)
-                else:
-                    outf.write(line)
