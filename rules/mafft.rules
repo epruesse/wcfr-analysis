@@ -38,27 +38,13 @@ with Stage("nucalign_mafft") as S:
 with Stage("protalign_mafft") as S:
   S.doc("""
   """)
-  rule mafft_nuc2prot:
-      message:
-          "Converting nuc->amino"
-      input:
-          "{:prev:}/{:target:}.fasta.gz"
-      output:
-          "{:this:}/{target}.fastp.gz"
-      run:
-          from ymp.nuc2aa import fasta_dna2aa
-          import gzip
-          with gzip.open(output[0], "wt") as outf:
-            for fn in input:
-              with gzip.open(input[0], "rt") as inf:
-                fasta_dna2aa(inf, outf)
 
   rule mafft_prot:
       """Uses mafft to align all sequences from sets of clustered contigs."""
       message:
           "FIXME"
       input:
-          "{:this:}/{target}.fastp.gz"
+          "{:prev:}/{:target:}.fastp.gz"
       output:
           "{:this:}/{target}.aligned.fastp.gz"
       log:
