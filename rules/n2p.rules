@@ -15,3 +15,9 @@ with Stage("n2p") as S:
             for fn in input:
               with gzip.open(input[0], "rt") as inf:
                 fasta_dna2aa(inf, outf)
+
+  rule nuc2prot_all:
+      input:
+          "{:this:}/{:targets:}.fastp.gz"
+      output:
+          touch("{:this:}/all")
