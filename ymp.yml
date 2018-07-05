@@ -1,8 +1,8 @@
 projects:
    wcfr:
-     data: "simulated/map.csv"
-   groupwcfr:
-     data: "simulated/map2.csv"
+     data: "simulated/simple_map.csv"
+   wcfr2:
+     data: "simulated/group_map.csv"
    ibd:
      data:
        join:

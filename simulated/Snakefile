@@ -4,30 +4,47 @@ abundances = {
     's2.t1': [6,8,3,1,9],
     's2.t2': [6,8,3,1,9]
 }
-
-genomes = [
-    'B_eggerthiiDSM20697.g1',
-    'B_uniformisCL03T00C23.g2',
-    'B_fragilisNCTC9343.g3',
-    'B_Sp325.g4',
-    'B_fragilisHMW615.g5'
-]
+import csv
 
 SAMPLE_FACTOR = 1000
+SAMPLE = 'sample'
 
-def get_nreads(wc):
-    genome_idx = genomes.index(wc.genome)
-    return abundances[wc.sample][genome_idx] * SAMPLE_FACTOR
+genomes = {
+    'g1': 'B_eggerthiiDSM20697.g1',
+    'g2': 'B_uniformisCL03T00C23.g2',
+    'g3': 'B_fragilisNCTC9343.g3',
+    'g4': 'B_Sp325.g4',
+    'g5': 'B_fragilisHMW615.g5'
+}
+genomes_rev = {val:key for key, val in genomes.items()}
+
+
+def read_csv(fn):
+    with open(fn) as inf:
+        reader = csv.DictReader(inf)
+        rows = {row[SAMPLE]:row for row in reader}
+    return rows, reader.fieldnames
+
+def get_nreads(wc, input):
+    abundances, fieldnames = read_csv(input.abundances)
+    genome_id = genomes_rev[wc.genome]
+    return float(abundances[wc.sample][genome_id]) * SAMPLE_FACTOR
+
+def get_readfiles(wc):
+    abundances, fieldnames = read_csv("{}_abundances.csv".format(wc.set))
+    return expand("{set}.{sample}.{rf}.fq.gz",
+                  set=wc.set,
+                  sample=abundances.keys(),
+                  rf='R1 R2'.split())    
 
 wildcard_constraints:
-    sample = "(" + "|".join(abundances.keys()) +  ")",
-    genome = "(" + "|".join(genomes) +")"
+    set = "[^.]+",
+    sample = "[^.]+",
+    genome = "(" + "|".join(genomes.values()) +")"
 
-readfiles = expand("{sample}.{rf}.fq.gz", sample=abundances.keys(), rf='R1 R2'.split())
-
+sets, = glob_wildcards("{set}_abundances.csv")
 rule all:
-    input:
-        readfiles, "map.csv"
+    input: expand("{set}_map.csv", set=sets)
 
 rule gzip:
     input:
@@ -38,22 +55,29 @@ rule gzip:
        "gzip -c {input} > {output}"
 
 rule mapping_file:
+    input:
+       '{set}_abundances.csv',
+       get_readfiles
     output:
-       'map2.csv'
+       '{set}_map.csv'
     run:
+       abundances, fieldnames = read_csv(input[0])
+       fieldnames.extend(['fq1','fq2'])
        with open(output[0], "w") as out:
           import csv
-          writer = csv.writer(out)
-          writer.writerow(['name', 'fq1', 'fq2'])
-          for sample in abundances:
-              writer.writerow([sample, sample+".R1.fq.gz", sample+".R2.fq.gz"])
+          writer = csv.DictWriter(out, fieldnames=fieldnames)
+          writer.writeheader()
+          for sample in abundances.values():
+              for n in ('1','2'):
+                  sample['fq'+n] = ".".join((wildcards.set, sample[SAMPLE], "R"+n, "fq.gz"))
+              writer.writerow(sample)
 
 rule simulate_reads:
     input:
         "{genome}.fasta"
     output:
-        fq1 = "{genome}.R1.fq",
-        fq2 = "{genome}.R2.fq"
+        fq1 = temp("{genome}.R1.fq"),
+        fq2 = temp("{genome}.R2.fq")
     params:
         insert_size = 10*15,
         coverage=1000,
@@ -78,11 +102,12 @@ rule simulate_reads:
 
 rule sample_reads:
     output:
-        fq1='{sample}.{genome}.R1.fq',
-        fq2='{sample}.{genome}.R2.fq'
+        fq1=temp('{set}.{sample}.{genome}.R1.fq'),
+        fq2=temp('{set}.{sample}.{genome}.R2.fq')
     input:
         fq1 = "{genome}.R1.fq",
-        fq2 = "{genome}.R2.fq"
+        fq2 = "{genome}.R2.fq",
+        abundances  = "{set}_abundances.csv"
     params:
         nreads = get_nreads
     shell: """
@@ -92,9 +117,9 @@ rule sample_reads:
 
 rule merge_read_files:
     output:
-        "{sample}.{r}.fq"
+        temp("{set}.{sample}.{r}.fq")
     input:
-        expand('{{sample}}.{genome}.{{r}}.fq', genome=genomes)
+        expand('{{set}}.{{sample}}.{genome}.{{r}}.fq', genome=genomes.values())
     wildcard_constraints:
         r="R[12]"
     shell: """
