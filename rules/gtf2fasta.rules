@@ -47,5 +47,7 @@ with Stage("gtf2fasta") as S:
             data = inf.readlines()
             for line in data:
                 if line.startswith(">"):
-                    line + sampleID
-            outf.write(line)
+                    line = line + "_" + sampleID
+                    outf.write(line)
+                else:
+                    outf.write(line)
