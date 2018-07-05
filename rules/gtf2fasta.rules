@@ -1,0 +1,51 @@
+Env(name="bedtools", base="bioconda", packages="bedtools")
+
+with Stage("gtf2fasta") as S:
+  S.doc("""
+  """)
+
+  rule bedtools_getfasta:
+    """Uses bedtools getfasta to filter an assembled fasta file according to hits in a gtf file."""
+    message:
+        "FIXME"
+    input:
+        fasta = "{:prev:}/{:target:}.fasta.gz",
+        gtf = "{:prev:}/{:target:}.gtf"
+    output:
+        "{:this:}/{target}.fasta"
+    conda:
+        "bedtools"
+    shadow:
+        "shallow"
+    shell: """
+    gunzip -c {input.fasta} > tmpfile
+    bedtools getfasta \
+    -fi tmpfile \
+    -bed {input.gtf} \
+    -fo {output}
+    """
+
+  rule bedtools_getfasta_all:
+    message:
+     "Bedtools: getfasta done"
+    input:
+     "{:this:}/{:targets:}.fasta.gz"
+    output:
+     touch("{:this:}/all")
+
+  rule affix_sample_id:
+    message:
+        "Adding the sample id to each contig"
+    input:
+        "{:this:}/{target}.fasta"
+    output:
+        "{:this:}/{target}.id.fasta.gz"
+    run:
+        sample = input[0]
+        sampleID = sample.split(".")[0]
+        with open(input[0], "r") as inf, open(output[0], "a") as outf:
+            data = inf.readlines()
+            for line in data:
+                if line.startswith(">"):
+                    line + sampleID
+            outf.write(line)
