@@ -44,7 +44,7 @@ wildcard_constraints:
 
 sets, = glob_wildcards("{set}_abundances.csv")
 rule all:
-    input: expand("{set}_map.csv", set=sets)
+    input: expand("{set}_map.csv", set=sets), "genomes.fasta.gz"
 
 rule gzip:
     input:
@@ -53,6 +53,14 @@ rule gzip:
        "{file}.gz"
     shell:
        "gzip -c {input} > {output}"
+
+rule genomes_file:
+    input:
+        expand("{g}.fasta", g=genomes.values())
+    output:
+        "genomes.fasta.gz"
+    shell:
+        "gzip -c {input} > {output}"
 
 rule mapping_file:
     input:

@@ -17,3 +17,6 @@ references:
    psa:
      - url: 'psa.faa'
        type: fastp
+   genomes:
+     - url: simulated/genomes.fasta.gz
+       type: fasta
