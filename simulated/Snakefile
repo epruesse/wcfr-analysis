@@ -59,8 +59,15 @@ rule genomes_file:
         expand("{g}.fasta", g=genomes.values())
     output:
         "genomes.fasta.gz"
-    shell:
-        "gzip -c {input} > {output}"
+    params:
+        g = list(genomes.keys())
+    shell: """
+    set -- {params.g}
+    for f in {input:q}; do
+      sed 's/^>/>'$1' /' $f
+      shift
+    done | gzip -c > {output}
+    """
 
 rule mapping_file:
     input:
