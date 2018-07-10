@@ -1,0 +1,55 @@
+with Stage("otu_table") as S:
+    rule make_otu_table_all:
+        input:
+            "{:this:}/{:targets:}.otu_table.csv"
+        output:
+            touch("{:this:}/all")
+
+    rule make_otu_table2:
+        input:
+            "{:prev:}/{:target:}.counts.tsv"
+        output:
+            "{:this:}/{target}.otu_table.csv"
+        run:
+            import csv
+            import sys
+            # list where each entry corresponds to a sample and entries
+            # are a dictionary of otu:count pairs
+            counts = []
+            # list of all unique otus across all samples
+            otus = []
+
+            samples = [os.path.basename(n)[:-len(".counts.tsv")]
+                       for n in input]
+
+            for sample in input:
+                counts.append({})
+                with open(sample, "r") as tsv:
+                    reader = csv.reader(tsv, delimiter="\t")
+                    # each row from tsv generates a list of strings
+                    # seperated on "\t", ex. ["otu", "length", "count"]
+                    for row in reader:
+                        if row[0] == "name":
+                            continue
+                        otu = row[0]
+                        if otu == "*":
+                            continue
+                        # Divide the read count by length of the otu to
+                        # normalize
+                        count = round(int(row[2]) / int(row[1]),3)
+                        counts[-1][otu] = count
+                        if otu not in otus:
+                            otus.append(otu)
+
+            otu_table = []
+            for otu in otus:
+                otu_table.append([0]*len(samples))
+                for i in range(len(counts)):
+                    if otu in counts[i]:
+                        otu_table[-1][i]=counts[i][otu]
+
+            with open(output[0], "w") as out:
+                writer = csv.writer(out, delimiter="\t")
+                writer.writerow(["#OTU"] + samples)
+                for i in range(len(otu_table)):
+                    writer.writerow([otus[i]] + otu_table[i])
