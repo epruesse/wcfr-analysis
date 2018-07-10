@@ -33,3 +33,31 @@ with Stage("gtf2fasta") as S:
      "{:this:}/{:targets:}.fasta.gz"
     output:
      touch("{:this:}/all")
+
+with Stage("count_gtf") as S:
+  rule bedtools_coverage:
+      message:
+          "Bedtools: calculating coverage for {wildcards.target}"
+      input:
+          gtf = "{:prev:}/{:target:}.gtf",
+          bam = "{:prev:}/{:target:}.sorted.bam"
+      output:
+          "{:this:}/{target}.counts.tsv"
+      conda:
+          "bedtools"
+      shell: """
+      bedtools coverage -a {input.gtf} -b {input.bam} | \
+      awk '
+      BEGIN {{print "name\tlength\tcount"}}
+      {{print $1 ":" $4 "." $5 "\t" $11 "\t" $10}}
+      ' \
+      > {output}
+      """
+
+  rule bedtools_coverage_all:
+      message:
+          "Bedtools: coverage done"
+      input:
+          "{:this:}/{:targets:}.counts.tsv"
+      output:
+          touch("{:this:}/all")
